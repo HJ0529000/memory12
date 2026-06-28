@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旧物与记忆</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.45)),
+                        url("./images/微信图片_20260628153858_738_30.jpg") center/cover no-repeat fixed;
+            font-family: "Microsoft Yahei", serif;
+            color: #fff;
+            overflow-x: hidden;
+            padding: 60px 20px;
+        }
+
+        /* 页面标题 */
+        .page-title {
+            text-align: center;
+            margin-bottom: 120px;
+        }
+        .page-title h1 {
+            font-size: 36px;
+            font-weight: 300;
+            letter-spacing: 8px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        /* 堆叠照片容器 */
+        .stack-gallery {
+            position: relative;
+            width: 700px;
+            height: 550px;
+            margin: 0 auto;
+        }
+
+        .photo-card {
+            position: absolute;
+            width: 320px;
+            background: #fff;
+            padding: 16px 16px 40px 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .photo-card img {
+            width: 100%;
+            height: 380px;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* 错落重叠旋转效果 */
+        .card-1 {
+            top: 20px;
+            left: 0;
+            transform: rotate(-3deg);
+            z-index: 1;
+        }
+        .card-2 {
+            top: 0;
+            left: 200px;
+            transform: rotate(2deg);
+            z-index: 2;
+        }
+        .card-3 {
+            top: 120px;
+            left: 120px;
+            transform: rotate(-1deg);
+            z-index: 3;
+        }
+
+        /* 悬浮抬升效果 */
+        .photo-card:hover {
+            transform: rotate(0deg) translateY(-20px);
+            z-index: 99;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+        }
+
+        /* 图文弹窗 */
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            padding: 40px;
+        }
+        .preview-modal.active {
+            display: flex;
+        }
+        .modal-content {
+            max-width: 1100px;
+            width: 100%;
+            display: flex;
+            gap: 50px;
+            align-items: flex-start;
+        }
+        .modal-img {
+            flex-shrink: 0;
+            width: 420px;
+            height: 550px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .modal-text {
+            flex: 1;
+            color: rgba(255,255,255,0.9);
+            font-size: 17px;
+            line-height: 2;
+            letter-spacing: 1px;
+            overflow-y: auto;
+            max-height: 80vh;
+            padding-right: 20px;
+        }
+        .modal-text p {
+            margin-bottom: 24px;
+        }
+        .close-btn {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 45px;
+            color: #fff;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: 0.2s;
+        }
+        .close-btn:hover {
+            opacity: 1;
+        }
+
+        /* 背景音乐控件 */
+        .music-control {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 22px;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        .music-control.playing {
+            animation: rotate 8s linear infinite;
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 移动端适配 */
+        @media(max-width:900px) {
+            .stack-gallery {
+                width: 100%;
+                height: 450px;
+            }
+            .photo-card {
+                width: 220px;
+                padding: 12px 12px 30px 12px;
+            }
+            .photo-card img {
+                height: 260px;
+            }
+            .card-1 { left: 0; }
+            .card-2 { left: 120px; }
+            .card-3 { left: 70px; }
+            .modal-content {
+                flex-direction: column;
+                gap: 30px;
+            }
+            .modal-img {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景音乐 -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="./bgm.mp3" type="audio/mpeg">
+    </audio>
+    <div class="music-control" id="musicBtn">♪</div>
+
+    <div class="page-title">
+        <h1>关于习惯与记忆</h1>
+    </div>
+
+    <!-- 堆叠照片区 -->
+    <div class="stack-gallery">
+        <div class="photo-card card-1" data-img="./images/微信图片_20260628153620_735_30.png"></div>
+        <div class="photo-card card-1 img">
+            <img src="./images/微信图片_20260628153620_735_30.png" alt="">
+        </div>
+        <div class="photo-card card-2" data-img="./images/微信图片_20260628153621_736_30.png">
+            <img src="./images/微信图片_20260628153621_736_30.png" alt="">
+        </div>
+        <div class="photo-card card-3" data-img="./images/微信图片_20260628153623_737_30.png">
+            <img src="./images/微信图片_20260628153623_737_30.png" alt="">
+        </div>
+    </div>
+
+    <!-- 图文弹窗 -->
+    <div class="preview-modal" id="modal">
+        <span class="close-btn" id="close">×</span>
+        <div class="modal-content">
+            <img class="modal-img" id="previewImg" src="" alt="">
+            <div class="modal-text">
+                <p>小的时候，舍不得丢掉一件陪了自己很久的玩具，哪怕它已经旧到不再运行。我会告诉自己，或许把它放在桌子旁边又或是箱子里面，要不了多久它会突然“活过来”，继续陪着我。</p>
+                <p>再长大一点，我开始不愿意丢掉坏了的修正带、缺角的本子、破损的围巾，会觉得它们陪伴着我学生时期的春夏和秋冬。就像每一个远航的船长，会珍藏每一面陪他远航的旗帜。</p>
+                <p>后来的后来，我开始害怕分别。还记得刚上大学时一位现今关系很好的朋友问过我：“你是不是平时就这样不爱说话啊”，后来这个成为一个我俩之间的“笑话”，他发现这样的描述在我身上着实不恰当了。他打趣的问过，当时那副生人勿近的样子是“哥哥“还是“弟弟”出来了。</p>
+                <p>无他，因为当时的我，还沉浸在刚和高中认识的那群伙伴分别的故事中，只觉得“茕茕白兔东走西顾”。现在再看，的却幼稚，但还挺有意思。</p>
+                <p>后来发现，其实自己是一个很习惯“习惯”的人，舍不得丢掉的玩偶，坏了的修正带，缺了角的笔记本，明明知道会是不合脚的鞋子，因为“习惯了”所以变成了习惯，不喜欢分开。</p>
+                <p>仔细算过一次，可能对于习惯的依赖能占据我生活的百分之20。我是一个不太“成熟”的人，很多时候其实不能分清楚很多东西，处理不好很多情绪。可能无数个瞬间，百分之20曾经跳向过趋于百分之一百的心率，但理智会跳出来和“依赖”打架，最后双方选择和解，划出了一片天地，存储这些无处安放的记忆。提起它们时，心照不宣的默契告诉自己“百分之20”是属于这一亩三分地，最大的面积。</p>
+                <p>很长一段时间里，直到现在，其实我还是没学会怎么和人说“再见”。我不爱说再见，好像只要不说出这两个字，就一定会有下次见。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cards = document.querySelectorAll('.photo-card');
+        const modal = document.getElementById('modal');
+        const previewImg = document.getElementById('previewImg');
+        const closeBtn = document.getElementById('close');
+        const bgMusic = document.getElementById('bgMusic');
+        const musicBtn = document.getElementById('musicBtn');
+        let isPlaying = false;
+
+        // 照片点击打开弹窗
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                const src = card.getAttribute('data-img');
+                previewImg.src = src;
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            })
+        })
+
+        // 关闭弹窗
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        })
+        modal.addEventListener('click', (e) => {
+            if(e.target === modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        })
+
+        // 背景音乐控制
+        musicBtn.addEventListener('click', () => {
+            if(!isPlaying) {
+                bgMusic.play();
+                musicBtn.classList.add('playing');
+                isPlaying = true;
+            } else {
+                bgMusic.pause();
+                musicBtn.classList.remove('playing');
+                isPlaying = false;
+            }
+        })
+
+        // 首次交互自动解锁音频播放
+        document.addEventListener('click', () => {
+            if(!isPlaying) {
+                bgMusic.play().catch(() => {});
+                musicBtn.classList.add('playing');
+                isPlaying = true;
+            }
+        }, { once: true })
+    </script>
+</body>
+</html>
